@@ -1,8 +1,9 @@
 // Lambda Function code for Alexa.
 // Paste this into your index.js file. 
-import {model} from './model/dataModel';
+
 const Alexa = require("ask-sdk");
 const https = require("https");
+const http = require("http");
 
 
 const invocationName = "api watcher";
@@ -156,12 +157,80 @@ const GetStatus_Handler =  {
         const request = handlerInput.requestEnvelope.request;
         return request.type === 'IntentRequest' && request.intent.name === 'GetStatus' ;
     },
+    async handle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        const responseBuilder = handlerInput.responseBuilder;
+        let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+
+    let say = '';
+    say =await getResponse('http://34.207.124.57:9090/status');
+
+    
+        return responseBuilder
+            .speak(say)
+            .reprompt('try again, ' + say)
+            .getResponse();
+    },
+};
+
+function getResponse(url) {
+ return new Promise((resolve, reject) => {
+   http.get(url, (response) => {
+     let msg = '';
+     response.on('data', (data) => {
+       msg = msg + data;
+     });
+     response.on('end', () => {
+       resolve(msg);
+     });
+   });
+ });
+}
+
+const GetStatusOfTag_Handler =  {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest' && request.intent.name === 'GetStatusOfTag' ;
+    },
     handle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         const responseBuilder = handlerInput.responseBuilder;
         let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
-        let say = 'Hello from GetStatus. ';
+        let say = 'Hello from GetStatusOfTag. ';
+
+        let slotStatus = '';
+        let resolvedSlot;
+
+        let slotValues = getSlotValues(request.intent.slots); 
+        // getSlotValues returns .heardAs, .resolved, and .isValidated for each slot, according to request slot status codes ER_SUCCESS_MATCH, ER_SUCCESS_NO_MATCH, or traditional simple request slot without resolutions
+
+        // console.log('***** slotValues: ' +  JSON.stringify(slotValues, null, 2));
+        //   SLOT: service 
+        if (slotValues.service.heardAs) {
+            slotStatus += ' slot service was heard as ' + slotValues.service.heardAs + '. ';
+        } else {
+            slotStatus += 'slot service is empty. ';
+        }
+        if (slotValues.service.ERstatus === 'ER_SUCCESS_MATCH') {
+            slotStatus += 'a valid ';
+            if(slotValues.service.resolved !== slotValues.service.heardAs) {
+                slotStatus += 'synonym for ' + slotValues.service.resolved + '. '; 
+                } else {
+                slotStatus += 'match. '
+            } // else {
+                //
+        }
+        if (slotValues.service.ERstatus === 'ER_SUCCESS_NO_MATCH') {
+            slotStatus += 'which did not match any slot value. ';
+            console.log('***** consider adding "' + slotValues.service.heardAs + '" to the custom slot type used by slot service! '); 
+        }
+
+        if( (slotValues.service.ERstatus === 'ER_SUCCESS_NO_MATCH') ||  (!slotValues.service.heardAs) ) {
+            slotStatus += 'A few valid values are, ' + sayArray(getExampleSlotValues('GetStatusOfTag','service'), 'or');
+        }
+
+        say += slotStatus;
 
 
         return responseBuilder
@@ -608,6 +677,7 @@ exports.handler = skillBuilder
         AMAZON_StopIntent_Handler, 
         AMAZON_NavigateHomeIntent_Handler, 
         GetStatus_Handler, 
+        GetStatusOfTag_Handler, 
         LaunchRequest_Handler, 
         SessionEndedHandler
     )
@@ -625,3 +695,77 @@ exports.handler = skillBuilder
 
     .lambda();
 
+
+// End of Skill code -------------------------------------------------------------
+// Static Language Model for reference
+
+const model = {
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "api watcher",
+      "intents": [
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "GetStatus",
+          "slots": [],
+          "samples": [
+            "Tell me the status of application",
+            "what is the status of application"
+          ]
+        },
+        {
+          "name": "GetStatusOfTag",
+          "slots": [
+            {
+              "name": "service",
+              "type": "SERVICES"
+            }
+          ],
+          "samples": [
+            "tell me the status of {service}",
+            "what is the status of {service}"
+          ]
+        },
+        {
+          "name": "LaunchRequest"
+        }
+      ],
+      "types": [
+        {
+          "name": "SERVICES",
+          "values": [
+            {
+              "name": {
+                "value": "Google"
+              }
+            },
+            {
+              "name": {
+                "value": "PureCloud"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+};
