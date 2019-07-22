@@ -240,6 +240,59 @@ const GetStatusOfTag_Handler =  {
     },
 };
 
+const GetTimeTagWentDown_Handler =  {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest' && request.intent.name === 'GetTimeTagWentDown' ;
+    },
+    handle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        const responseBuilder = handlerInput.responseBuilder;
+        let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+
+        let say = 'Hello from GetTimeTagWentDown. ';
+
+        let slotStatus = '';
+        let resolvedSlot;
+
+        let slotValues = getSlotValues(request.intent.slots); 
+        // getSlotValues returns .heardAs, .resolved, and .isValidated for each slot, according to request slot status codes ER_SUCCESS_MATCH, ER_SUCCESS_NO_MATCH, or traditional simple request slot without resolutions
+
+        // console.log('***** slotValues: ' +  JSON.stringify(slotValues, null, 2));
+        //   SLOT: tag 
+        if (slotValues.tag.heardAs) {
+            slotStatus += ' slot tag was heard as ' + slotValues.tag.heardAs + '. ';
+        } else {
+            slotStatus += 'slot tag is empty. ';
+        }
+        if (slotValues.tag.ERstatus === 'ER_SUCCESS_MATCH') {
+            slotStatus += 'a valid ';
+            if(slotValues.tag.resolved !== slotValues.tag.heardAs) {
+                slotStatus += 'synonym for ' + slotValues.tag.resolved + '. '; 
+                } else {
+                slotStatus += 'match. '
+            } // else {
+                //
+        }
+        if (slotValues.tag.ERstatus === 'ER_SUCCESS_NO_MATCH') {
+            slotStatus += 'which did not match any slot value. ';
+            console.log('***** consider adding "' + slotValues.tag.heardAs + '" to the custom slot type used by slot tag! '); 
+        }
+
+        if( (slotValues.tag.ERstatus === 'ER_SUCCESS_NO_MATCH') ||  (!slotValues.tag.heardAs) ) {
+            slotStatus += 'A few valid values are, ' + sayArray(getExampleSlotValues('GetTimeTagWentDown','tag'), 'or');
+        }
+
+        say += slotStatus;
+
+
+        return responseBuilder
+            .speak(say)
+            .reprompt('try again, ' + say)
+            .getResponse();
+    },
+};
+
 const LaunchRequest_Handler =  {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
@@ -677,7 +730,8 @@ exports.handler = skillBuilder
         AMAZON_StopIntent_Handler, 
         AMAZON_NavigateHomeIntent_Handler, 
         GetStatus_Handler, 
-        GetStatusOfTag_Handler, 
+        GetStatusOfTag_Handler,
+        GetTimeTagWentDown_Handler, 
         LaunchRequest_Handler, 
         SessionEndedHandler
     )
@@ -694,7 +748,6 @@ exports.handler = skillBuilder
  // .withAutoCreateTable(true)
 
     .lambda();
-
 
 // End of Skill code -------------------------------------------------------------
 // Static Language Model for reference
@@ -737,7 +790,7 @@ const model = {
           "slots": [
             {
               "name": "service",
-              "type": "SERVICES"
+              "type": "AMAZON.Actor"
             }
           ],
           "samples": [
@@ -746,26 +799,23 @@ const model = {
           ]
         },
         {
+          "name": "GetTimeTagWentDown",
+          "slots": [
+            {
+              "name": "tag",
+              "type": "AMAZON.Actor"
+            }
+          ],
+          "samples": [
+            "what time did {tag} go down",
+            "when did {tag} go down"
+          ]
+        },
+        {
           "name": "LaunchRequest"
         }
       ],
-      "types": [
-        {
-          "name": "SERVICES",
-          "values": [
-            {
-              "name": {
-                "value": "Google"
-              }
-            },
-            {
-              "name": {
-                "value": "PureCloud"
-              }
-            }
-          ]
-        }
-      ]
+      "types": []
     }
   }
 };
