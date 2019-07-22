@@ -174,19 +174,6 @@ const GetStatus_Handler =  {
     },
 };
 
-function getResponse(url) {
- return new Promise((resolve, reject) => {
-   http.get(url, (response) => {
-     let msg = '';
-     response.on('data', (data) => {
-       msg = msg + data;
-     });
-     response.on('end', () => {
-       resolve(msg);
-     });
-   });
- });
-}
 
 const GetStatusOfTag_Handler =  {
     canHandle(handlerInput) {
@@ -200,39 +187,10 @@ const GetStatusOfTag_Handler =  {
 
         let say = '';
 
-        let slotStatus = '';
-        let resolvedSlot;
-
-        let slotValues = getSlotValues(request.intent.slots); 
-        // getSlotValues returns .heardAs, .resolved, and .isValidated for each slot, according to request slot status codes ER_SUCCESS_MATCH, ER_SUCCESS_NO_MATCH, or traditional simple request slot without resolutions
-
-        // console.log('***** slotValues: ' +  JSON.stringify(slotValues, null, 2));
-        //   SLOT: service 
-        if (slotValues.service.heardAs) {
-            slotStatus += await getResponse(serviceUrl + '/status?search='+slotValues.service.heardAs);
-        } else {
-            slotStatus += 'slot service is empty. ';
+        let slotValues = request.intent.slots.service.value; 
+        if(slotValues) {
+            say = await getResponse(serviceUrl + '/status?search='+slotValues);
         }
-        if (slotValues.service.ERstatus === 'ER_SUCCESS_MATCH') {
-            slotStatus += 'a valid ';
-            if(slotValues.service.resolved !== slotValues.service.heardAs) {
-                slotStatus += 'synonym for ' + slotValues.service.resolved + '. '; 
-                } else {
-                slotStatus += 'match. '
-            } // else {
-                //
-        }
-        if (slotValues.service.ERstatus === 'ER_SUCCESS_NO_MATCH') {
-            slotStatus += 'which did not match any slot value. ';
-            console.log('***** consider adding "' + slotValues.service.heardAs + '" to the custom slot type used by slot service! '); 
-        }
-
-        if( (slotValues.service.ERstatus === 'ER_SUCCESS_NO_MATCH') ||  (!slotValues.service.heardAs) ) {
-            slotStatus += 'A few valid values are, ' + sayArray(getExampleSlotValues('GetStatusOfTag','service'), 'or');
-        }
-
-        say += slotStatus;
-
 
         return responseBuilder
             .speak(say)
@@ -241,50 +199,18 @@ const GetStatusOfTag_Handler =  {
     },
 };
 
-const GetTimeTagWentDown_Handler =  {
+const GetServicesDown_Handler =  {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
-        return request.type === 'IntentRequest' && request.intent.name === 'GetTimeTagWentDown' ;
+        return request.type === 'IntentRequest' && request.intent.name === 'GetServicesDown' ;
     },
-    handle(handlerInput) {
+    async handle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         const responseBuilder = handlerInput.responseBuilder;
         let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
-        let say = 'Hello from GetTimeTagWentDown. ';
-
-        let slotStatus = '';
-        let resolvedSlot;
-
-        let slotValues = getSlotValues(request.intent.slots); 
-        // getSlotValues returns .heardAs, .resolved, and .isValidated for each slot, according to request slot status codes ER_SUCCESS_MATCH, ER_SUCCESS_NO_MATCH, or traditional simple request slot without resolutions
-
-        // console.log('***** slotValues: ' +  JSON.stringify(slotValues, null, 2));
-        //   SLOT: tag 
-        if (slotValues.tag.heardAs) {
-            slotStatus += ' slot tag was heard as ' + slotValues.tag.heardAs + '. ';
-        } else {
-            slotStatus += 'slot tag is empty. ';
-        }
-        if (slotValues.tag.ERstatus === 'ER_SUCCESS_MATCH') {
-            slotStatus += 'a valid ';
-            if(slotValues.tag.resolved !== slotValues.tag.heardAs) {
-                slotStatus += 'synonym for ' + slotValues.tag.resolved + '. '; 
-                } else {
-                slotStatus += 'match. '
-            } // else {
-                //
-        }
-        if (slotValues.tag.ERstatus === 'ER_SUCCESS_NO_MATCH') {
-            slotStatus += 'which did not match any slot value. ';
-            console.log('***** consider adding "' + slotValues.tag.heardAs + '" to the custom slot type used by slot tag! '); 
-        }
-
-        if( (slotValues.tag.ERstatus === 'ER_SUCCESS_NO_MATCH') ||  (!slotValues.tag.heardAs) ) {
-            slotStatus += 'A few valid values are, ' + sayArray(getExampleSlotValues('GetTimeTagWentDown','tag'), 'or');
-        }
-
-        say += slotStatus;
+        let say = '';
+        say = await getResponse(serviceUrl + '/down');
 
 
         return responseBuilder
@@ -293,6 +219,21 @@ const GetTimeTagWentDown_Handler =  {
             .getResponse();
     },
 };
+
+
+function getResponse(url) {
+ return new Promise((resolve, reject) => {
+   http.get(url, (response) => {
+     let msg = '';
+     response.on('data', (data) => {
+       msg = msg + data;
+     });
+     response.on('end', () => {
+       resolve(msg);
+     });
+   });
+ });
+}
 
 const LaunchRequest_Handler =  {
     canHandle(handlerInput) {
@@ -731,10 +672,10 @@ exports.handler = skillBuilder
         AMAZON_StopIntent_Handler, 
         AMAZON_NavigateHomeIntent_Handler, 
         GetStatus_Handler, 
-        GetStatusOfTag_Handler,
-        GetTimeTagWentDown_Handler, 
+        GetStatusOfTag_Handler, 
         LaunchRequest_Handler, 
-        SessionEndedHandler
+        SessionEndedHandler,
+        GetServicesDown_Handler
     )
     .addErrorHandlers(ErrorHandler)
     .addRequestInterceptors(InitMemoryAttributesInterceptor)
@@ -749,6 +690,8 @@ exports.handler = skillBuilder
  // .withAutoCreateTable(true)
 
     .lambda();
+
+
 
 // End of Skill code -------------------------------------------------------------
 // Static Language Model for reference
@@ -800,16 +743,10 @@ const model = {
           ]
         },
         {
-          "name": "GetTimeTagWentDown",
-          "slots": [
-            {
-              "name": "tag",
-              "type": "AMAZON.Actor"
-            }
-          ],
+          "name": "GetServicesDown",
+          "slots": [],
           "samples": [
-            "what time did {tag} go down",
-            "when did {tag} go down"
+            "Which services are down"
           ]
         },
         {

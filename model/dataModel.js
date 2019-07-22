@@ -1,4 +1,4 @@
-export const model = {
+const model = {
   "interactionModel": {
     "languageModel": {
       "invocationName": "api watcher",
@@ -45,16 +45,10 @@ export const model = {
           ]
         },
         {
-          "name": "GetTimeTagWentDown",
-          "slots": [
-            {
-              "name": "tag",
-              "type": "AMAZON.Actor"
-            }
-          ],
+          "name": "GetServicesDown",
+          "slots": [],
           "samples": [
-            "what time did {tag} go down",
-            "when did {tag} go down"
+            "Which services are down"
           ]
         },
         {
