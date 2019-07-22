@@ -7,6 +7,7 @@ const http = require("http");
 
 
 const invocationName = "api watcher";
+const serviceUrl = 'http://34.207.124.57:9090';
 
 // Session Attributes 
 //   Alexa will track attributes for you, by default only during the lifespan of your session.
@@ -163,7 +164,7 @@ const GetStatus_Handler =  {
         let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
     let say = '';
-    say =await getResponse('http://34.207.124.57:9090/status');
+    say = await getResponse(serviceUrl + '/status');
 
     
         return responseBuilder
@@ -192,12 +193,12 @@ const GetStatusOfTag_Handler =  {
         const request = handlerInput.requestEnvelope.request;
         return request.type === 'IntentRequest' && request.intent.name === 'GetStatusOfTag' ;
     },
-    handle(handlerInput) {
+    async handle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         const responseBuilder = handlerInput.responseBuilder;
         let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
-        let say = 'Hello from GetStatusOfTag. ';
+        let say = '';
 
         let slotStatus = '';
         let resolvedSlot;
@@ -208,7 +209,7 @@ const GetStatusOfTag_Handler =  {
         // console.log('***** slotValues: ' +  JSON.stringify(slotValues, null, 2));
         //   SLOT: service 
         if (slotValues.service.heardAs) {
-            slotStatus += ' slot service was heard as ' + slotValues.service.heardAs + '. ';
+            slotStatus += await getResponse(serviceUrl + '/status?search='+slotValues.service.heardAs);
         } else {
             slotStatus += 'slot service is empty. ';
         }
