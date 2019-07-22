@@ -1,9 +1,8 @@
 // Lambda Function code for Alexa.
 // Paste this into your index.js file. 
-
+import {model} from './model/dataModel';
 const Alexa = require("ask-sdk");
 const https = require("https");
-
 
 
 const invocationName = "api watcher";
@@ -626,48 +625,3 @@ exports.handler = skillBuilder
 
     .lambda();
 
-
-// End of Skill code -------------------------------------------------------------
-// Static Language Model for reference
-
-const model = {
-  "interactionModel": {
-    "languageModel": {
-      "invocationName": "api watcher",
-      "intents": [
-        {
-          "name": "AMAZON.FallbackIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.CancelIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.HelpIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.StopIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.NavigateHomeIntent",
-          "samples": []
-        },
-        {
-          "name": "GetStatus",
-          "slots": [],
-          "samples": [
-            "Tell me the status of application",
-            "what is the status of application"
-          ]
-        },
-        {
-          "name": "LaunchRequest"
-        }
-      ],
-      "types": []
-    }
-  }
-};
