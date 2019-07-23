@@ -645,8 +645,9 @@ const model = {
           "name": "GetStatus",
           "slots": [],
           "samples": [
-            "Tell me the status of application",
-            "what is the status of application"
+            "show me the status ",
+            "Tell me the status",
+            "what is the status"
           ]
         },
         {
@@ -667,6 +668,31 @@ const model = {
           "slots": [],
           "samples": [
             "Which services are down"
+          ]
+        },
+        {
+          "name": "GetServicesDownInTag",
+          "slots": [
+            {
+              "name": "tag",
+              "type": "AMAZON.Actor"
+            }
+          ],
+          "samples": [
+            "what services are down in {tag}"
+          ]
+        },
+        {
+          "name": "GetTimeWhenServiceWentDown",
+          "slots": [
+            {
+              "name": "service",
+              "type": "AMAZON.Actor"
+            }
+          ],
+          "samples": [
+            "what time did {service} go down",
+            "when was {service} down"
           ]
         },
         {
