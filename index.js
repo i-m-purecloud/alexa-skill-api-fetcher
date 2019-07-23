@@ -98,12 +98,6 @@ const AMAZON_HelpIntent_Handler =  {
 
         let say = 'You asked for help. '; 
 
-        // let previousIntent = getPreviousIntent(sessionAttributes);
-        // if (previousIntent && !handlerInput.requestEnvelope.session.new) {
-        //     say += 'Your last intent was ' + previousIntent + '. ';
-        // }
-        // say +=  'I understand  ' + intents.length + ' intents, '
-
         say += ' Here something you can ask me, ' + getSampleUtterance(sampleIntent);
 
         return responseBuilder
@@ -303,7 +297,7 @@ const GetApiNameForTag_Handler =  {
         let slotValues = request.intent.slots.tag.value; 
        
         if (slotValues) {
-            say = await getResponse(serviceUrl + '/status?search='+slotValues) ;
+            say = await getResponse(serviceUrl + '/all?search='+slotValues) ;
         }
 
         return responseBuilder
@@ -404,86 +398,6 @@ function stripSpeak(str) {
     return(str.replace('<speak>', '').replace('</speak>', '')); 
 } 
  
- 
- 
- 
-function getSlotValues(filledSlots) { 
-    const slotValues = {}; 
- 
-    Object.keys(filledSlots).forEach((item) => { 
-        const name  = filledSlots[item].name; 
- 
-        if (filledSlots[item] && 
-            filledSlots[item].resolutions && 
-            filledSlots[item].resolutions.resolutionsPerAuthority[0] && 
-            filledSlots[item].resolutions.resolutionsPerAuthority[0].status && 
-            filledSlots[item].resolutions.resolutionsPerAuthority[0].status.code) { 
-            switch (filledSlots[item].resolutions.resolutionsPerAuthority[0].status.code) { 
-                case 'ER_SUCCESS_MATCH': 
-                    slotValues[name] = { 
-                        heardAs: filledSlots[item].value, 
-                        resolved: filledSlots[item].resolutions.resolutionsPerAuthority[0].values[0].value.name, 
-                        ERstatus: 'ER_SUCCESS_MATCH' 
-                    }; 
-                    break; 
-                case 'ER_SUCCESS_NO_MATCH': 
-                    slotValues[name] = { 
-                        heardAs: filledSlots[item].value, 
-                        resolved: '', 
-                        ERstatus: 'ER_SUCCESS_NO_MATCH' 
-                    }; 
-                    break; 
-                default: 
-                    break; 
-            } 
-        } else { 
-            slotValues[name] = { 
-                heardAs: filledSlots[item].value, 
-                resolved: '', 
-                ERstatus: '' 
-            }; 
-        } 
-    }, this); 
- 
-    return slotValues; 
-} 
- 
-function getExampleSlotValues(intentName, slotName) { 
- 
-    let examples = []; 
-    let slotType = ''; 
-    let slotValuesFull = []; 
- 
-    let intents = model.interactionModel.languageModel.intents; 
-    for (let i = 0; i < intents.length; i++) { 
-        if (intents[i].name == intentName) { 
-            let slots = intents[i].slots; 
-            for (let j = 0; j < slots.length; j++) { 
-                if (slots[j].name === slotName) { 
-                    slotType = slots[j].type; 
- 
-                } 
-            } 
-        } 
-         
-    } 
-    let types = model.interactionModel.languageModel.types; 
-    for (let i = 0; i < types.length; i++) { 
-        if (types[i].name === slotType) { 
-            slotValuesFull = types[i].values; 
-        } 
-    } 
- 
- 
-    examples.push(slotValuesFull[0].name.value); 
-    examples.push(slotValuesFull[1].name.value); 
-    if (slotValuesFull.length > 2) { 
-        examples.push(slotValuesFull[2].name.value); 
-    } 
- 
- 
-    return examples; 
-} 
  
 function sayArray(myData, penultimateWord = 'and') { 
     let result = ''; 
@@ -768,24 +682,15 @@ exports.handler = skillBuilder
         GetServicesDown_Handler, 
         GetServicesDownInTag_Handler, 
         GetTimeWhenServiceWentDown_Handler, 
+        GetApiNameForTag_Handler,
+        GetAllServicesName_Handler,
         LaunchRequest_Handler, 
         SessionEndedHandler,
-        GetServicesDown_Handler,
-        GetApiNameForTag_Handler,
-        GetAllServicesName_Handler
+        GetServicesDown_Handler
     )
     .addErrorHandlers(ErrorHandler)
     .addRequestInterceptors(InitMemoryAttributesInterceptor)
     .addRequestInterceptors(RequestHistoryInterceptor)
-
-   // .addResponseInterceptors(ResponseRecordSpeechOutputInterceptor)
-
- // .addRequestInterceptors(RequestPersistenceInterceptor)
- // .addResponseInterceptors(ResponsePersistenceInterceptor)
-
- // .withTableName("askMemorySkillTable")
- // .withAutoCreateTable(true)
-
     .lambda();
 
 
