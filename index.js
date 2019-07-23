@@ -257,7 +257,7 @@ const GetTimeWhenServiceWentDown_Handler =  {
 
         let slotValues = request.intent.slots.service.value;
         if(slotValues) {
-            say = await getResponse(serviceUrl + '/time-down?search='+slotValues);
+            say = await getResponse(serviceUrl + '/downtime?search='+slotValues);
         }
 
         return responseBuilder
