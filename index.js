@@ -7,6 +7,7 @@ const http = require("http");
 
 
 const invocationName = "api watcher";
+const serviceUrl = 'http://34.207.124.57:9090';
 
 // Session Attributes 
 //   Alexa will track attributes for you, by default only during the lifespan of your session.
@@ -240,51 +241,67 @@ const GetStatusOfTag_Handler =  {
     },
 };
 
-const GetTimeTagWentDown_Handler =  {
+const GetServicesDown_Handler =  {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
-        return request.type === 'IntentRequest' && request.intent.name === 'GetTimeTagWentDown' ;
+        return request.type === 'IntentRequest' && request.intent.name === 'GetServicesDown' ;
     },
     handle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         const responseBuilder = handlerInput.responseBuilder;
         let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
-        let say = 'Hello from GetTimeTagWentDown. ';
+        let say = 'Hello from GetServicesDown. ';
 
-        let slotStatus = '';
-        let resolvedSlot;
 
-        let slotValues = getSlotValues(request.intent.slots); 
-        // getSlotValues returns .heardAs, .resolved, and .isValidated for each slot, according to request slot status codes ER_SUCCESS_MATCH, ER_SUCCESS_NO_MATCH, or traditional simple request slot without resolutions
+        return responseBuilder
+            .speak(say)
+            .reprompt('try again, ' + say)
+            .getResponse();
+    },
+};
 
-        // console.log('***** slotValues: ' +  JSON.stringify(slotValues, null, 2));
-        //   SLOT: tag 
-        if (slotValues.tag.heardAs) {
-            slotStatus += ' slot tag was heard as ' + slotValues.tag.heardAs + '. ';
-        } else {
-            slotStatus += 'slot tag is empty. ';
-        }
-        if (slotValues.tag.ERstatus === 'ER_SUCCESS_MATCH') {
-            slotStatus += 'a valid ';
-            if(slotValues.tag.resolved !== slotValues.tag.heardAs) {
-                slotStatus += 'synonym for ' + slotValues.tag.resolved + '. '; 
-                } else {
-                slotStatus += 'match. '
-            } // else {
-                //
-        }
-        if (slotValues.tag.ERstatus === 'ER_SUCCESS_NO_MATCH') {
-            slotStatus += 'which did not match any slot value. ';
-            console.log('***** consider adding "' + slotValues.tag.heardAs + '" to the custom slot type used by slot tag! '); 
+const GetServicesDownInTag_Handler =  {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest' && request.intent.name === 'GetServicesDownInTag' ;
+    },
+    async handle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        const responseBuilder = handlerInput.responseBuilder;
+        let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+
+        let say = '';
+
+        let slotValues = request.intent.slots.service.value;
+        if(slotValues) {
+            say = await getResponse(serviceUrl + '/down?search='+slotValues);
         }
 
-        if( (slotValues.tag.ERstatus === 'ER_SUCCESS_NO_MATCH') ||  (!slotValues.tag.heardAs) ) {
-            slotStatus += 'A few valid values are, ' + sayArray(getExampleSlotValues('GetTimeTagWentDown','tag'), 'or');
+
+        return responseBuilder
+            .speak(say)
+            .reprompt('try again, ' + say)
+            .getResponse();
+    },
+};
+
+const GetTimeWhenServiceWentDown_Handler =  {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest' && request.intent.name === 'GetTimeWhenServiceWentDown' ;
+    },
+    handle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        const responseBuilder = handlerInput.responseBuilder;
+        let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+
+        let say = '';
+
+        let slotValues = request.intent.slots.service.value;
+        if(slotValues) {
+            say = await getResponse(serviceUrl + '/time-down?search='+slotValues);
         }
-
-        say += slotStatus;
-
 
         return responseBuilder
             .speak(say)
@@ -730,8 +747,10 @@ exports.handler = skillBuilder
         AMAZON_StopIntent_Handler, 
         AMAZON_NavigateHomeIntent_Handler, 
         GetStatus_Handler, 
-        GetStatusOfTag_Handler,
-        GetTimeTagWentDown_Handler, 
+        GetStatusOfTag_Handler, 
+        GetServicesDown_Handler, 
+        GetServicesDownInTag_Handler, 
+        GetTimeWhenServiceWentDown_Handler, 
         LaunchRequest_Handler, 
         SessionEndedHandler
     )
@@ -753,69 +772,89 @@ exports.handler = skillBuilder
 // Static Language Model for reference
 
 const model = {
-  "interactionModel": {
-    "languageModel": {
-      "invocationName": "api watcher",
-      "intents": [
-        {
-          "name": "AMAZON.FallbackIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.CancelIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.HelpIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.StopIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.NavigateHomeIntent",
-          "samples": []
-        },
-        {
-          "name": "GetStatus",
-          "slots": [],
-          "samples": [
-            "Tell me the status of application",
-            "what is the status of application"
-          ]
-        },
-        {
-          "name": "GetStatusOfTag",
-          "slots": [
-            {
-              "name": "service",
-              "type": "AMAZON.Actor"
-            }
-          ],
-          "samples": [
-            "tell me the status of {service}",
-            "what is the status of {service}"
-          ]
-        },
-        {
-          "name": "GetTimeTagWentDown",
-          "slots": [
-            {
-              "name": "tag",
-              "type": "AMAZON.Actor"
-            }
-          ],
-          "samples": [
-            "what time did {tag} go down",
-            "when did {tag} go down"
-          ]
-        },
-        {
-          "name": "LaunchRequest"
-        }
-      ],
-      "types": []
+    "interactionModel": {
+      "languageModel": {
+        "invocationName": "api watcher",
+        "intents": [
+          {
+            "name": "AMAZON.FallbackIntent",
+            "samples": []
+          },
+          {
+            "name": "AMAZON.CancelIntent",
+            "samples": []
+          },
+          {
+            "name": "AMAZON.HelpIntent",
+            "samples": []
+          },
+          {
+            "name": "AMAZON.StopIntent",
+            "samples": []
+          },
+          {
+            "name": "AMAZON.NavigateHomeIntent",
+            "samples": []
+          },
+          {
+            "name": "GetStatus",
+            "slots": [],
+            "samples": [
+              "show me the status ",
+              "Tell me the status",
+              "what is the status"
+            ]
+          },
+          {
+            "name": "GetStatusOfTag",
+            "slots": [
+              {
+                "name": "service",
+                "type": "AMAZON.Actor"
+              }
+            ],
+            "samples": [
+              "tell me the status of {service}",
+              "what is the status of {service}"
+            ]
+          },
+          {
+            "name": "GetServicesDown",
+            "slots": [],
+            "samples": [
+              "Which services are down"
+            ]
+          },
+          {
+            "name": "GetServicesDownInTag",
+            "slots": [
+              {
+                "name": "tag",
+                "type": "AMAZON.Actor"
+              }
+            ],
+            "samples": [
+              "what services are down in {tag}"
+            ]
+          },
+          {
+            "name": "GetTimeWhenServiceWentDown",
+            "slots": [
+              {
+                "name": "service",
+                "type": "AMAZON.Actor"
+              }
+            ],
+            "samples": [
+              "what time did {service} go down",
+              "when was {service} down"
+            ]
+          },
+          {
+            "name": "LaunchRequest"
+          }
+        ],
+        "types": []
+      }
     }
-  }
-};
+  };
