@@ -212,6 +212,53 @@ const GetServicesDown_Handler =  {
         let say = '';
         say = await getResponse(serviceUrl + '/down');
 
+        return responseBuilder
+            .speak(say)
+            .reprompt('try again, ' + say)
+            .getResponse();
+    },
+};
+
+const GetServicesDownInTag_Handler =  {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest' && request.intent.name === 'GetServicesDownInTag' ;
+    },
+    async handle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        const responseBuilder = handlerInput.responseBuilder;
+        let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+
+        let say = '';
+
+        let slotValues = request.intent.slots.tag.value;
+        if(slotValues) {
+            say = await getResponse(serviceUrl + '/down?search='+slotValues);
+        }
+
+        return responseBuilder
+            .speak(say)
+            .reprompt('try again, ' + say)
+            .getResponse();
+    },
+};
+
+const GetTimeWhenServiceWentDown_Handler =  {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest' && request.intent.name === 'GetTimeWhenServiceWentDown' ;
+    },
+    async handle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        const responseBuilder = handlerInput.responseBuilder;
+        let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+
+        let say = '';
+
+        let slotValues = request.intent.slots.service.value;
+        if(slotValues) {
+            say = await getResponse(serviceUrl + '/time-down?search='+slotValues);
+        }
 
         return responseBuilder
             .speak(say)
@@ -718,6 +765,9 @@ exports.handler = skillBuilder
         AMAZON_NavigateHomeIntent_Handler, 
         GetStatus_Handler, 
         GetStatusOfTag_Handler, 
+        GetServicesDown_Handler, 
+        GetServicesDownInTag_Handler, 
+        GetTimeWhenServiceWentDown_Handler, 
         LaunchRequest_Handler, 
         SessionEndedHandler,
         GetServicesDown_Handler,
@@ -785,7 +835,6 @@ const model = {
               }
             ],
             "samples": [
-              "get the status of {service}",
               "tell me the status of {service}",
               "what is the status of {service}"
             ]
