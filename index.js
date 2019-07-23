@@ -164,7 +164,7 @@ const GetStatus_Handler =  {
         let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
     let say = '';
-    say =await getResponse('http://34.207.124.57:9090/status');
+    say = await getResponse(serviceUrl + '/status');
 
     
         return responseBuilder
@@ -174,65 +174,23 @@ const GetStatus_Handler =  {
     },
 };
 
-function getResponse(url) {
- return new Promise((resolve, reject) => {
-   http.get(url, (response) => {
-     let msg = '';
-     response.on('data', (data) => {
-       msg = msg + data;
-     });
-     response.on('end', () => {
-       resolve(msg);
-     });
-   });
- });
-}
 
 const GetStatusOfTag_Handler =  {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         return request.type === 'IntentRequest' && request.intent.name === 'GetStatusOfTag' ;
     },
-    handle(handlerInput) {
+    async handle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         const responseBuilder = handlerInput.responseBuilder;
         let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
-        let say = 'Hello from GetStatusOfTag. ';
+        let say = '';
 
-        let slotStatus = '';
-        let resolvedSlot;
-
-        let slotValues = getSlotValues(request.intent.slots); 
-        // getSlotValues returns .heardAs, .resolved, and .isValidated for each slot, according to request slot status codes ER_SUCCESS_MATCH, ER_SUCCESS_NO_MATCH, or traditional simple request slot without resolutions
-
-        // console.log('***** slotValues: ' +  JSON.stringify(slotValues, null, 2));
-        //   SLOT: service 
-        if (slotValues.service.heardAs) {
-            slotStatus += ' slot service was heard as ' + slotValues.service.heardAs + '. ';
-        } else {
-            slotStatus += 'slot service is empty. ';
+        let slotValues = request.intent.slots.service.value; 
+        if(slotValues) {
+            say = await getResponse(serviceUrl + '/status?search='+slotValues);
         }
-        if (slotValues.service.ERstatus === 'ER_SUCCESS_MATCH') {
-            slotStatus += 'a valid ';
-            if(slotValues.service.resolved !== slotValues.service.heardAs) {
-                slotStatus += 'synonym for ' + slotValues.service.resolved + '. '; 
-                } else {
-                slotStatus += 'match. '
-            } // else {
-                //
-        }
-        if (slotValues.service.ERstatus === 'ER_SUCCESS_NO_MATCH') {
-            slotStatus += 'which did not match any slot value. ';
-            console.log('***** consider adding "' + slotValues.service.heardAs + '" to the custom slot type used by slot service! '); 
-        }
-
-        if( (slotValues.service.ERstatus === 'ER_SUCCESS_NO_MATCH') ||  (!slotValues.service.heardAs) ) {
-            slotStatus += 'A few valid values are, ' + sayArray(getExampleSlotValues('GetStatusOfTag','service'), 'or');
-        }
-
-        say += slotStatus;
-
 
         return responseBuilder
             .speak(say)
@@ -246,38 +204,13 @@ const GetServicesDown_Handler =  {
         const request = handlerInput.requestEnvelope.request;
         return request.type === 'IntentRequest' && request.intent.name === 'GetServicesDown' ;
     },
-    handle(handlerInput) {
-        const request = handlerInput.requestEnvelope.request;
-        const responseBuilder = handlerInput.responseBuilder;
-        let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-
-        let say = 'Hello from GetServicesDown. ';
-
-
-        return responseBuilder
-            .speak(say)
-            .reprompt('try again, ' + say)
-            .getResponse();
-    },
-};
-
-const GetServicesDownInTag_Handler =  {
-    canHandle(handlerInput) {
-        const request = handlerInput.requestEnvelope.request;
-        return request.type === 'IntentRequest' && request.intent.name === 'GetServicesDownInTag' ;
-    },
     async handle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         const responseBuilder = handlerInput.responseBuilder;
         let sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
 
         let say = '';
-
-        let slotValues = request.intent.slots.service.value;
-        if(slotValues) {
-            say = await getResponse(serviceUrl + '/down?search='+slotValues);
-        }
-
+        say = await getResponse(serviceUrl + '/down');
 
         return responseBuilder
             .speak(say)
@@ -309,6 +242,21 @@ const GetTimeWhenServiceWentDown_Handler =  {
             .getResponse();
     },
 };
+
+
+function getResponse(url) {
+ return new Promise((resolve, reject) => {
+   http.get(url, (response) => {
+     let msg = '';
+     response.on('data', (data) => {
+       msg = msg + data;
+     });
+     response.on('end', () => {
+       resolve(msg);
+     });
+   });
+ });
+}
 
 const LaunchRequest_Handler =  {
     canHandle(handlerInput) {
@@ -752,7 +700,8 @@ exports.handler = skillBuilder
         GetServicesDownInTag_Handler, 
         GetTimeWhenServiceWentDown_Handler, 
         LaunchRequest_Handler, 
-        SessionEndedHandler
+        SessionEndedHandler,
+        GetServicesDown_Handler
     )
     .addErrorHandlers(ErrorHandler)
     .addRequestInterceptors(InitMemoryAttributesInterceptor)
@@ -767,6 +716,8 @@ exports.handler = skillBuilder
  // .withAutoCreateTable(true)
 
     .lambda();
+
+
 
 // End of Skill code -------------------------------------------------------------
 // Static Language Model for reference
